@@ -1,0 +1,72 @@
+<script src="http://maps.google.com/maps/api/js?sensor=false"></script>
+
+<script>
+
+// Default position
+var centerpos = new google.maps.LatLng(48.579400,7.7519);
+
+// default options for the google map
+var optionsGmaps = {
+	center:centerpos,
+	navigationControlOptions: {style: google.maps.NavigationControlStyle.SMALL},
+	mapTypeId: google.maps.MapTypeId.ROADMAP,
+	zoom: 15
+};
+
+// Init map
+var map = new google.maps.Map(document.getElementById("map"), optionsGmaps);
+
+if(navigator.geolocation) {
+
+	// callback function, called by getCurrentPosition() in case of success
+	function drawPosition(position) {
+	
+		var infopos = "Got position : <br>";
+		infopos += "Latitude : "+position.coords.latitude +"<br>";
+		infopos += "Longitude: "+position.coords.longitude+"<br>";
+		infopos += "Altitude : "+position.coords.altitude +"<br>";
+		document.getElementById("myposition").innerHTML = infopos;
+
+		// Make new object LatLng for Google Maps
+		var latlng = new google.maps.LatLng(position.coords.latitude, position.coords.longitude);
+
+		// Add a marker at position
+		var marker = new google.maps.Marker({
+			position: latlng,
+			map: map,
+			title:"You are here"
+		});
+		
+		map.panTo(latlng);
+
+	}
+
+	// callback function, called by getCurrentPosition() in case of error
+	function errorPosition(error) {
+		var info = "Error during geolocation : ";
+		switch(error.code) {
+		case error.TIMEOUT:
+			info += "Timeout !";
+		break;
+		case error.PERMISSION_DENIED:
+			info += "You did not access to the geolocation API";
+		break;
+		case error.POSITION_UNAVAILABLE:
+			info += "Position could not be determined";
+		break;
+		case error.UNKNOWN_ERROR:
+			info += "Unknown error";
+		break;
+		}
+		document.getElementById("myposition").innerHTML = info;
+	}
+
+	navigator.geolocation.getCurrentPosition(drawPosition,errorPosition);
+
+} else {
+
+	alert("Geolocation API not supported by your browser");
+
+}
+
+</script>

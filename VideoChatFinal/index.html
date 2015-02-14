@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta name='keywords' content='WebRTC, HTML5, JavaScript' />
+<meta name='description' content='WebRTC Reference App' />
+<meta name='viewport' content='width=device-width,initial-scale=1,minimum-scale=1,maximum-scale=1'>
+
+<base target='_blank'>
+
+<title>WebRTC client</title>
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.2/css/bootstrap.min.css">
+<script src='/socket.io/socket.io.js'></script>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.6.4/jquery.min.js"></script>
+<style>
+  .wrapper {
+    width:100%;    
+  }
+  .content {
+    text-align: left;
+    width:200px;
+  }
+</style>
+</head>
+
+<body>
+
+   <div class="wrapper" align="center">
+      <div class="content">
+      <br><br>
+      Welcome to the Multi Peer chat!<br>
+      To start, choose a username containing at least 3 characters<br>
+      Username <input type="text" id="username" name="username" ><br>
+      <div id="noRooms">It seems that no rooms have been created.<br>
+      Create a room below!<br></div>
+      <div id="create">
+      Room name <input type="text" id="roomname" name="roomname"><br>
+      Room Code <input type="text" id="roomcode" name="roomcode"><br>
+      <button onclick="createRoom()">create</button>
+
+      </div>
+      <div id="hasRooms">
+        or Join a room already created<br>
+      </div>
+      <div id="rooms"></div>
+    
+      </div>
+    
+    </div>
+    
+  <script>
+    var socket = io.connect();
+    $("#noRooms").hide();
+    $("#hasRooms").hide();
+    $("#create").hide();
+    var rooms = [];
+    var roomslocal;
+    var username;
+    var currentRoom;
+  
+    $( "#username" ).keyup(function( event ) {
+      var len = $(this).val().length;
+      if (len > 2) {
+        socket.emit('entered');
+        username = $( "#username" ).val();
+        $("#create").show();
+        if (roomslocal.length == 0)
+         $("#noRooms").show();
+        else
+         $("#hasRooms").show();
+        }
+        else {
+          $("#noRooms").hide();
+           $("#hasRooms").hide();
+           $("#create").hide();
+        }
+    });    
+    
+
+    socket.on('inforooms', function (rooms) {
+        console.log("inforooms");
+
+        roomslocal = rooms;
+        $('#rooms').empty();
+        
+        for(var i = 0; i < rooms.length; i++) {
+            $('#rooms').append('<a><p class="room" onclick="selectRoom(\''+rooms[i].roomname+'\')">' + rooms[i].roomname + '</p></a>');
+        }
+    });
+   
+
+    
+
+    function selectRoom(room){
+      socket.emit('adduser', username);
+      for(var i = 0; i<roomslocal.length; i++){
+          if(room == roomslocal[i].roomname ){
+              if(roomslocal[i].userlist.length < roomslocal[i].maxspace){
+                var password = prompt("password?")
+                if(password == roomslocal[i].key ){
+                    //var pList = roomslocal[i].userlist;
+                    console.log(username);
+                    socket.emit('enterRoom', roomslocal[i].roomname, username);
+                    currentRoom = room;
+                    
+                    
+                    location.href = "room.html?room="+currentRoom+"&username="+username;
+                    
+                 }else if(password != roomslocal[i].key){
+                    alert("password not correct!");
+                 }
+                }else{
+                alert("room full!");
+               }
+          }
+      }
+    }
+     
+    function createRoom(){
+      var roomname = $( "#roomname" ).val();
+      var roomcode = $( "#roomcode" ).val();
+      var username = $( "#username" ).val();
+      socket.emit('adduser', username);
+      socket.emit('createRoom', roomname, roomcode, username);
+      $("#noRooms").hide();
+      $("#create").hide();
+    }
+      
+</script>
+<script src='connect.js'></script>
+
+</body>
+</html>
